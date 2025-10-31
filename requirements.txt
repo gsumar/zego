@@ -1,1 +1,6 @@
 aiohttp
+yarl
+beautifulsoup4
+pytest
+pytest-asyncio
+pytest-mock
