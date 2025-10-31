@@ -1,12 +1,14 @@
 import asyncio
 from client import SessionManager
+from parser import extract_links
 
 
 async def main(url: str):
     async with SessionManager(timeout=10) as session_manager:
         html = await session_manager.fetch(url)
+        links = extract_links(url, html)
 
-    print(html)
+    print(links)
 
 if __name__ == "__main__":
     import sys
