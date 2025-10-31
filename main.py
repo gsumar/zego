@@ -1,7 +1,9 @@
 import asyncio
 from client import SessionManager
-from helper import LinksExtractor, LinksDomainFilter
+from helper import LinksExtractor, LinksDomainFilter, LinksPrinter
 from yarl import URL
+
+MAX_CONCURRENT_REQUESTS = 10
 
 async def main(url: str):
     parsed_base = URL(url)
@@ -9,13 +11,17 @@ async def main(url: str):
 
     extractor = LinksExtractor()
     domain_filter = LinksDomainFilter(domain)
+    printer = LinksPrinter()
+
+    sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
     async with SessionManager(timeout=10) as session_manager:
-        html = await session_manager.fetch(url)
-        links = extractor.extract(url, html)
-        same_domain_links = domain_filter.filter(links)
 
-    print(same_domain_links)
+        async with sem:
+            html = await session_manager.fetch(url)
+            links = extractor.extract(url, html)
+            same_domain_links = domain_filter.filter(links)
+            printer.print(url, same_domain_links)
 
 if __name__ == "__main__":
     import sys
