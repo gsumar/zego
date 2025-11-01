@@ -2,10 +2,11 @@ import asyncio
 from client import SessionManager
 from helper import LinksExtractor, LinksDomainFilter, LinksPrinter, QueueManager
 from yarl import URL
+import sys
 
 MAX_CONCURRENT_REQUESTS = 10
 
-async def main(base_url: str):
+async def crawl(base_url: str):
     parsed_base = URL(base_url)
     domain = parsed_base.host
 
@@ -36,16 +37,16 @@ async def main(base_url: str):
 
             queue_manager.task_done()
 
+        await queue_manager.join()
 
-if __name__ == "__main__":
-    import sys
-
+def main():
     if len(sys.argv) < 2:
         print("Error: URL parameter is required")
         print("Usage: python main.py <url>")
         sys.exit(1)
 
     url = sys.argv[1]
-    asyncio.run(main(url))
+    asyncio.run(crawl(url))
 
-# python3 main.py https://www.bbc.com
+if __name__ == "__main__":
+    main()
