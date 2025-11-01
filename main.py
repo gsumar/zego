@@ -4,7 +4,7 @@ from helper import LinksExtractor, LinksDomainFilter, LinksPrinter, QueueManager
 from yarl import URL
 import sys
 
-MAX_CONCURRENT_REQUESTS = 10
+MAX_CONCURRENT_REQUESTS = 50
 
 async def crawl(base_url: str):
     parsed_base = URL(base_url)
@@ -20,24 +20,28 @@ async def crawl(base_url: str):
     sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
     async with SessionManager(timeout=10) as session_manager:
+        async def worker():
+            while queue_manager.is_incomplete():
+                url = await queue_manager.get_next_unvisited(visited)
 
-        while queue_manager.is_incomplete():
-            url = await queue_manager.get_next_unvisited(visited)
+                async with sem:
+                    html = await session_manager.fetch(url)
+                    if html is None:
+                        queue_manager.task_done()
+                        continue
 
-            async with sem:
-                html = await session_manager.fetch(url)
-                if html is None:
-                    queue_manager.task_done()
-                    continue
+                    links = extractor.extract(url, html)
+                    same_domain_links = domain_filter.filter(links)
+                    printer.print(url, same_domain_links)
+                    await queue_manager.add_unvisited(same_domain_links, visited)
 
-                links = extractor.extract(url, html)
-                same_domain_links = domain_filter.filter(links)
-                printer.print(url, same_domain_links)
-                await queue_manager.add_unvisited(same_domain_links, visited)
+                queue_manager.task_done()
 
-            queue_manager.task_done()
-
+        # Launch workers
+        workers = [asyncio.create_task(worker()) for _ in range(MAX_CONCURRENT_REQUESTS)]
         await queue_manager.join()
+        for w in workers:
+            w.cancel()
 
 def main():
     if len(sys.argv) < 2:
