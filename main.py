@@ -19,7 +19,7 @@ async def crawl(base_url: str):
     await queue_manager.add(base_url)
     sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
-    async with SessionManager(timeout=10) as session_manager:
+    async with SessionManager(timeout=10, max_connections=MAX_CONCURRENT_REQUESTS) as session_manager:
         async def worker():
             while queue_manager.is_incomplete():
                 url = await queue_manager.get_next_unvisited(visited)

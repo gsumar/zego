@@ -36,11 +36,11 @@ async def test_fetch_returns_html(mocker):
     mock_response.text = mocker.AsyncMock(return_value="<html><body>Test</body></html>")
     mock_response.__aenter__ = mocker.AsyncMock(return_value=mock_response)
     mock_response.__aexit__ = mocker.AsyncMock(return_value=None)
-    
+
     async with SessionManager(timeout=10) as manager:
         manager.session.get = mocker.Mock(return_value=mock_response)
         result = await manager.fetch("https://example.com")
-    
+
     assert result == "<html><body>Test</body></html>"
 
 
@@ -52,11 +52,11 @@ async def test_fetch_returns_none_for_non_html(mocker):
     mock_response.content_type = "application/json"
     mock_response.__aenter__ = mocker.AsyncMock(return_value=mock_response)
     mock_response.__aexit__ = mocker.AsyncMock(return_value=None)
-    
+
     async with SessionManager(timeout=10) as manager:
         manager.session.get = mocker.Mock(return_value=mock_response)
         result = await manager.fetch("https://example.com")
-    
+
     assert result is None
 
 
@@ -68,11 +68,11 @@ async def test_fetch_returns_none_for_error_status(mocker):
     mock_response.content_type = "text/html"
     mock_response.__aenter__ = mocker.AsyncMock(return_value=mock_response)
     mock_response.__aexit__ = mocker.AsyncMock(return_value=None)
-    
+
     async with SessionManager(timeout=10) as manager:
         manager.session.get = mocker.Mock(return_value=mock_response)
         result = await manager.fetch("https://example.com")
-    
+
     assert result is None
 
 
