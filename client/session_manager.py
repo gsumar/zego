@@ -37,7 +37,7 @@ class SessionManager:
 
     async def fetch(self, url: str) -> Optional[str]:
         """
-        Fetch the content of a URL asynchronously.
+        Fetch the content of a URL asynchronously with early content-type checking.
 
         Args:
             url: The URL to fetch
@@ -50,8 +50,19 @@ class SessionManager:
 
         try:
             async with self.session.get(url, timeout=self.timeout) as response:
-                if response.status == 200 and response.content_type == "text/html":
-                    return await response.text()
+                # Early status check
+                if response.status != 200:
+                    return None
+
+                # Early content-type check (before downloading)
+                content_type = response.headers.get('Content-Type', '')
+                if 'text/html' not in content_type:
+                    return None
+
+                # Download the full response with efficient encoding
+                content = await response.text(encoding='utf-8', errors='ignore')
+
+                return content
         except Exception:
             pass
         return None

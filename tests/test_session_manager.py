@@ -32,7 +32,7 @@ async def test_fetch_returns_html(mocker):
     """Test that fetch returns HTML content for valid response."""
     mock_response = mocker.AsyncMock()
     mock_response.status = 200
-    mock_response.content_type = "text/html"
+    mock_response.headers = {'Content-Type': 'text/html; charset=utf-8'}
     mock_response.text = mocker.AsyncMock(return_value="<html><body>Test</body></html>")
     mock_response.__aenter__ = mocker.AsyncMock(return_value=mock_response)
     mock_response.__aexit__ = mocker.AsyncMock(return_value=None)
@@ -49,7 +49,7 @@ async def test_fetch_returns_none_for_non_html(mocker):
     """Test that fetch returns None for non-HTML content."""
     mock_response = mocker.AsyncMock()
     mock_response.status = 200
-    mock_response.content_type = "application/json"
+    mock_response.headers = {'Content-Type': 'application/json'}
     mock_response.__aenter__ = mocker.AsyncMock(return_value=mock_response)
     mock_response.__aexit__ = mocker.AsyncMock(return_value=None)
 
@@ -65,7 +65,7 @@ async def test_fetch_returns_none_for_error_status(mocker):
     """Test that fetch returns None for non-200 status."""
     mock_response = mocker.AsyncMock()
     mock_response.status = 404
-    mock_response.content_type = "text/html"
+    mock_response.headers = {'Content-Type': 'text/html'}
     mock_response.__aenter__ = mocker.AsyncMock(return_value=mock_response)
     mock_response.__aexit__ = mocker.AsyncMock(return_value=None)
 
@@ -82,6 +82,7 @@ async def test_fetch_returns_none_on_exception(mocker):
     async with SessionManager(timeout=10) as manager:
         manager.session.get = mocker.Mock(side_effect=Exception("Network error"))
         result = await manager.fetch("https://example.com")
-    
+
     assert result is None
+
 
